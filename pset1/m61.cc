@@ -35,6 +35,11 @@ m61_memory_buffer::~m61_memory_buffer() {
     munmap(this->buffer, this->size);
 }
 
+size_t offset_to_next_aligned_size(size_t size) {
+    auto offset = (size % alignof(std::max_align_t));
+    return offset + size;
+}
+
 
 
 
@@ -60,7 +65,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     default_stats.active_size += sz;
     // Otherwise there is enough space; claim the next `sz` bytes
     void* ptr = &default_buffer.buffer[default_buffer.pos];
-    default_buffer.pos += sz;
+    default_buffer.pos += offset_to_next_aligned_size(sz);
     return ptr;
 }
 
