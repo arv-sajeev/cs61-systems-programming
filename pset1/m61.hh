@@ -26,14 +26,14 @@ void* m61_calloc(size_t count, size_t sz, const char* file = __builtin_FILE(), i
 /// m61_statistics
 ///    Structure tracking memory statistics.
 struct m61_statistics {
-    unsigned long long nactive;         // # active allocations
-    unsigned long long active_size;     // # bytes in active allocations
-    unsigned long long ntotal;          // # total allocations
-    unsigned long long total_size;      // # bytes in total allocations
-    unsigned long long nfail;           // # failed allocation attempts
-    unsigned long long fail_size;       // # bytes in failed alloc attempts
-    uintptr_t heap_min;                 // smallest allocated addr
-    uintptr_t heap_max;                 // largest allocated addr
+    unsigned long long nactive = 0;         // # active allocations
+    unsigned long long active_size = 0;     // # bytes in active allocations
+    unsigned long long ntotal = 0;          // # total allocations
+    unsigned long long total_size = 0;      // # bytes in total allocations
+    unsigned long long nfail = 0;           // # failed allocation attempts
+    unsigned long long fail_size = 0;       // # bytes in failed alloc attempts
+    uintptr_t heap_min = 0;                 // smallest allocated addr
+    uintptr_t heap_max = 0;                 // largest allocated addr
 };
 
 /// m61_get_statistics()
