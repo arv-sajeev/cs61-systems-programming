@@ -79,6 +79,9 @@ void* m61_malloc(size_t sz, const char* file, int line) {
 void m61_free(void* ptr, const char* file, int line) {
     // avoid uninitialized variable warnings
     (void) ptr, (void) file, (void) line;
+    if (ptr == nullptr) {
+        return;
+    }
     default_stats.nactive--;
     default_stats.active_size--;
     // Your code here. The handout code does nothing!
