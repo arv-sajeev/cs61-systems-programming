@@ -53,6 +53,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
         return nullptr;
     }
 
+    default_stats.nactive++;
     // Otherwise there is enough space; claim the next `sz` bytes
     void* ptr = &default_buffer.buffer[default_buffer.pos];
     default_buffer.pos += sz;
@@ -69,6 +70,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
 void m61_free(void* ptr, const char* file, int line) {
     // avoid uninitialized variable warnings
     (void) ptr, (void) file, (void) line;
+    default_stats.nactive--;
     // Your code here. The handout code does nothing!
 }
 
