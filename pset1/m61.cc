@@ -129,15 +129,19 @@ void m61_free(void* ptr, const char* file, int line) {
 ///    also return `nullptr` if `count == 0` or `size == 0`.
 
 void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
+    size_t total_size = count * sz;
+    if (count == 0 || sz == 0 || (sz != 0 && (total_size/sz != count))) {
+        return nullptr;
+    }
     // Your code here (not needed for first tests).
-    if (check_out_of_bounds(default_buffer.pos, default_buffer.size, count*sz)) {
+    if (check_out_of_bounds(default_buffer.pos, default_buffer.size, total_size)) {
         // Not enough space left in default buffer for allocation
         default_stats.update_failed_allocation(sz);
         return nullptr;
     }
-    void* ptr = m61_malloc(count * sz, file, line);
+    void* ptr = m61_malloc(total_size, file, line);
     if (ptr) {
-        memset(ptr, 0, count * sz);
+        memset(ptr, 0, total_size);
     }
     return ptr;
 }
