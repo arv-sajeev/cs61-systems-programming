@@ -55,7 +55,7 @@ void m61_statistics::update_failed_allocation(size_t sz) {
     default_stats.fail_size += sz;
 }
 
-void m61_statistics::update_free(uintptr_t ptr, size_t sz) {
+void m61_statistics::update_free([[maybe_unused]]uintptr_t ptr, size_t sz) {
     default_stats.nactive--;
     default_stats.active_size -= sz;
 }
