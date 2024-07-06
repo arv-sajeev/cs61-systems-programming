@@ -32,8 +32,12 @@ struct m61_statistics {
     unsigned long long total_size = 0;      // # bytes in total allocations
     unsigned long long nfail = 0;           // # failed allocation attempts
     unsigned long long fail_size = 0;       // # bytes in failed alloc attempts
-    uintptr_t heap_min = 0;                 // smallest allocated addr
+    uintptr_t heap_min = INTPTR_MAX;                 // smallest allocated addr
     uintptr_t heap_max = 0;                 // largest allocated addr
+    public:
+        void update_successful_allocation(uintptr_t ptr, size_t sz);
+        void update_failed_allocation(size_t sz);
+        void update_free(uintptr_t ptr, size_t sz);
 };
 
 /// m61_get_statistics()
@@ -43,6 +47,7 @@ m61_statistics m61_get_statistics();
 /// m61_print_statistics()
 ///    Print the current memory statistics.
 void m61_print_statistics();
+
 
 /// m61_print_leak_report()
 ///    Print a report of all currently-active allocated blocks of dynamic

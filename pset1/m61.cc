@@ -20,7 +20,7 @@ struct m61_memory_buffer {
 static m61_memory_buffer default_buffer;
 static m61_statistics default_stats;
 
-
+// Memory buffer
 m61_memory_buffer::m61_memory_buffer() {
     void* buf = mmap(nullptr,    // Place the buffer at a random address
         this->size,              // Buffer should be 8 MiB big
@@ -35,6 +35,32 @@ m61_memory_buffer::~m61_memory_buffer() {
     munmap(this->buffer, this->size);
 }
 
+// Statistics
+
+void m61_statistics::update_successful_allocation(uintptr_t ptr, size_t sz) {
+    default_stats.ntotal++;
+    default_stats.nactive++;
+    default_stats.total_size += sz;
+    default_stats.active_size += sz;
+    if (ptr < default_stats.heap_min) {
+        default_stats.heap_min = ptr;
+    }
+    if (ptr > default_stats.heap_max) {
+        default_stats.heap_max = ptr;
+    }
+}
+
+void m61_statistics::update_failed_allocation(size_t sz) {
+    default_stats.nfail++;
+    default_stats.fail_size += sz;
+}
+
+void m61_statistics::update_free(uintptr_t ptr, size_t sz) {
+    default_stats.nactive--;
+    default_stats.active_size -= sz;
+}
+
+// Utilities
 size_t offset_to_next_aligned_size(size_t size) {
     auto offset = (size % alignof(std::max_align_t));
     return offset + size;
@@ -54,18 +80,13 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     // Your code here.
     if (default_buffer.pos + sz > default_buffer.size) {
         // Not enough space left in default buffer for allocation
-        default_stats.nfail++;
-        default_stats.fail_size += sz;
+        default_stats.update_failed_allocation(sz);
         return nullptr;
     }
-
-    default_stats.ntotal++;
-    default_stats.total_size += sz;
-    default_stats.nactive++;
-    default_stats.active_size += sz;
     // Otherwise there is enough space; claim the next `sz` bytes
     void* ptr = &default_buffer.buffer[default_buffer.pos];
     default_buffer.pos += offset_to_next_aligned_size(sz);
+    default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz);
     return ptr;
 }
 
@@ -82,8 +103,9 @@ void m61_free(void* ptr, const char* file, int line) {
     if (ptr == nullptr) {
         return;
     }
-    default_stats.nactive--;
-    default_stats.active_size--;
+    //TODO
+    size_t sz = 0;
+    default_stats.update_free(reinterpret_cast<uintptr_t>(ptr), sz);
     // Your code here. The handout code does nothing!
 }
 
