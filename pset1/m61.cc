@@ -131,6 +131,8 @@ void m61_free(void* ptr, const char* file, int line) {
 void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
     size_t total_size = count * sz;
     if (count == 0 || sz == 0 || (sz != 0 && (total_size/sz != count))) {
+        // count/size is zero, or total size has wraparound
+        default_stats.update_failed_allocation(sz);
         return nullptr;
     }
     // Your code here (not needed for first tests).
