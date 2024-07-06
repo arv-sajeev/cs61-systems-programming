@@ -46,7 +46,7 @@ void m61_statistics::update_successful_allocation(uintptr_t ptr, size_t sz) {
         default_stats.heap_min = ptr;
     }
     if ((ptr+sz) > default_stats.heap_max ) {
-        default_stats.heap_max = ptr;
+        default_stats.heap_max = (ptr+sz);
     }
 }
 
