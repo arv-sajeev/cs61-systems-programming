@@ -66,6 +66,17 @@ size_t offset_to_next_aligned_size(size_t size) {
     return offset + size;
 }
 
+bool check_out_of_bounds(size_t pos, size_t buffer_sz, size_t size) {
+    // check for wraparound
+    if (pos + size < pos) {
+        return true;
+    }
+    else if (pos + size > buffer_sz) {
+        return true;
+    }
+    return false;
+}
+
 
 
 
@@ -78,7 +89,7 @@ size_t offset_to_next_aligned_size(size_t size) {
 void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     // Your code here.
-    if (default_buffer.pos + sz > default_buffer.size) {
+    if (check_out_of_bounds(default_buffer.pos, default_buffer.size, sz)) {
         // Not enough space left in default buffer for allocation
         default_stats.update_failed_allocation(sz);
         return nullptr;
