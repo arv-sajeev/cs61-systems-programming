@@ -111,7 +111,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     size_t total_size = sz + sizeof(chunk_header);
     if (check_out_of_bounds(default_buffer.pos, default_buffer.size, total_size)) {
         if (!freed_allocations[sz].empty()) {
-            void *ptr = freed_allocations[total_size].front();
+            void *ptr = freed_allocations[sz].front();
             freed_allocations[sz].pop();
             void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
             return payload_ptr;
