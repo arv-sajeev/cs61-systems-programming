@@ -7,8 +7,8 @@ collaborators and citations, in `AUTHORS.md`.
 
 Grading notes (if any)
 ----------------------
-Checkpoint checked till case 10
-Passing till case 16
+Checkpoint checked till case 23
+Passing till case 23
 
 
 
