@@ -6,9 +6,8 @@
 #include <cinttypes>
 #include <cassert>
 #include <sys/mman.h>
-#include <unordered_map>
 #include <map>
-#include <queue>
+#include <stack>
 
 
 struct m61_memory_buffer {
@@ -26,7 +25,7 @@ struct chunk_header {
 
 static m61_memory_buffer default_buffer;
 static m61_statistics default_stats;
-static std::map<size_t, std::queue<void*>> free_pool;
+static std::map<size_t, std::stack<void*>> free_pool;
 
 // Memory buffer
 m61_memory_buffer::m61_memory_buffer() {
@@ -48,11 +47,11 @@ void* allocate_from_free_pool(size_t sz) {
     // Search for a best-fit strategy through various pool sizes
     for (auto &pool_size : free_pool) {
         const auto& size =  pool_size.first;
-        auto& free_queue =  pool_size.second;
+        auto& free_stack =  pool_size.second;
         if (size >= sz) {
-            if (!free_queue.empty()) {
-                void *ptr = free_queue.front();
-                free_queue.pop();
+            if (!free_stack.empty()) {
+                void *ptr = free_stack.top();
+                free_stack.pop();
                 return ptr;
             }
         }
