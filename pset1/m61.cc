@@ -114,6 +114,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
             void *ptr = freed_allocations[sz].front();
             freed_allocations[sz].pop();
             void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
+            default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz);
             return payload_ptr;
         } 
         // Not enough space left in default buffer for allocation
