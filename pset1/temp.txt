@@ -1,0 +1,148 @@
+test01 test01 OK
+test02 test02 OK
+test03 test03 OK
+test04 test04 OK
+test05 test05 OK
+test06 test06 OK
+test06a test06a OK
+test06b test06b OK
+test06c test06c OK
+test07 test07 OK
+test08 test08 OK
+test09 test09 OK
+test10 test10 OK
+test11 test11 OK
+test12 test12 OK
+test13 test13 FAIL: Unexpected output starting on line 1
+  test13.cc:21: Expected `alloc count: active          1   total          2   fail          0`
+  output:1:          Got `test13: test13.cc:16: int main(): Assertion `p != nullptr' failed.`
+test14 test14 FAIL: Unexpected output starting on line 1
+  test14.cc:47: Expected `alloc count: active          0   total  ??>=500??   fail          0`
+  output:1:          Got `test14: test14.cc:22: int main(): Assertion `p != nullptr' failed.`
+test15 test15 OK
+test16 test16 OK
+test17 test17 FAIL: Unexpected output starting on line 1
+  test17.cc:20: Expected `alloc count: active          5   total         10   fail          1`
+  output:1:          Got `test17: test17.cc:16: int main(): Assertion `!garbage' failed.`
+test18 test18 OK
+test19 test19 OK
+test20 test20 FAIL: Unexpected output starting on line 1
+  test20.cc:25: Expected `alloc count: active          0   total          1   fail        100`
+  output:1:          Got `alloc count: active          0   total          0   fail        101
+                          alloc size:  active          0   total          0   fail 70863933021164`
+test21 test21 FAIL: Unexpected output starting on line 1
+  test21.cc:16: Expected `alloc count: active          0   total      10000   fail          0`
+  output:1:          Got `test21: test21.cc:10: int main(): Assertion `ptr' failed.`
+test22 test22 FAIL: Unexpected output starting on line 1
+  test22.cc:24: Expected `alloc count: active          0   total      50000   fail          0`
+  output:1:          Got `test22: test22.cc:12: int main(): Assertion `ptrs[j]' failed.`
+test23 test23 FAIL: Unexpected output starting on line 1
+  test23.cc:47: Expected `alloc count: active          0   total        ???   fail          0`
+  output:1:          Got `test23: test23.cc:29: int main(): Assertion `ptr' failed.`
+test24 test24 FAIL: Unexpected output starting on line 1
+  test24.cc:46: Expected `alloc count: active          0   total ??>=8000??   fail  ??{0|1}??`
+  output:1:          Got `test24: test24.cc:33: int main(): Assertion `ptrs[f]' failed.`
+test25 test25 FAIL: Unexpected output starting on line 1
+  test25.cc:38: Expected `alloc count: active          0   total       7170   fail          0`
+  output:1:          Got `test25: test25.cc:26: int main(): Assertion `ptrs[n]' failed.`
+test26 test26 FAIL: Unexpected output starting on line 1
+  test26.cc:39: Expected `alloc count: active          1   total       7169   fail          0`
+  output:1:          Got `test26: test26.cc:29: int main(): Assertion `bigptr' failed.`
+test27 test27 FAIL: Unexpected output starting on line 1
+  test27.cc:35: Expected `alloc count: active          0   total       2001   fail          0`
+  output:1:          Got `test27: test27.cc:28: int main(): Assertion `bigptr' failed.`
+test28 test28 FAIL: Unexpected output starting on line 2
+  test28.cc:17: Expected `alloc size:  active         40   total         55   fail        ???`
+  output:2:          Got `alloc size:  active         55   total         55   fail          0`
+test29 test29 FAIL: Unexpected output starting on line 2
+  test29.cc:56: Expected `alloc size:  active          0   total ??>=1000000??   fail        ???`
+  output:2:          Got `alloc size:  active    1001000   total    1001000   fail          0
+                          metadata memory used: 192kb`
+test30 test30 FAIL: Unexpected output starting on line 1
+  test30.cc:17: Expected `alloc count: active          0   total    1000000   fail          0`
+  output:1:          Got `test30: test30.cc:10: int main(): Assertion `ptr' failed.`
+test31 test31 FAIL: Unexpected output starting on line 1
+  test31.cc:22: Expected `alloc count: active          0   total    5000000   fail          0`
+  output:1:          Got `test31: test31.cc:12: int main(): Assertion `ptrs[j]' failed.`
+test32 test32 OK in 0.005 sec
+test33 test33 FAIL: Missing output starting on line 0
+  test33.cc:12: Expected `MEMORY BUG???: invalid free of pointer ???, not in heap`
+test34 test34 FAIL: Missing output starting on line 0
+  test34.cc:13: Expected `MEMORY BUG???: invalid free of pointer ???, not in heap`
+test35 test35 FAIL: Missing output starting on line 0
+  test35.cc:20: Expected `MEMORY BUG???: invalid free of pointer ???, not in heap`
+test36 test36 FAIL: Unexpected output starting on line 1
+  test36.cc:13: Expected `MEMORY BUG???: invalid free of pointer ???, not in heap`
+  output:1:          Got `alloc count: active 18446744073709551615   total          0   fail          0
+                          alloc size:  active 18446744073709529563   total          0   fail          0`
+test37 test37 FAIL: Unexpected output starting on line 2
+  test37.cc:16: Expected `MEMORY BUG???: invalid free of pointer ??ptr??, double free`
+  output:2:          Got `alloc count: active 18446744073709551615   total          1   fail          0
+                          alloc size:  active       2001   total       2001   fail          0`
+test38 test38 FAIL: Unexpected output starting on line 2
+  test38.cc:26: Expected `MEMORY BUG???: invalid free of pointer ??ptr??, double free`
+  output:2:          Got `alloc count: active          7   total         15   fail          0
+                          alloc size:  active       3130   total       3130   fail          0`
+test39 test39 FAIL: Unexpected output starting on line 2
+  test39.cc:15: Expected `MEMORY BUG???: invalid free of pointer ??ptr??, not allocated`
+  output:2:          Got `alloc count: active          0   total          1   fail          0
+                          alloc size:  active       2001   total       2001   fail          0`
+test40 test40 FAIL: Unexpected output starting on line 2
+  test40.cc:20: Expected `MEMORY BUG???: invalid free of pointer ??ptr??, not allocated`
+  output:2:          Got `alloc count: active 18446744073709551615   total          3   fail          0
+                          alloc size:  active       9489   total       9489   fail          0`
+test41 test41 FAIL: Unexpected output starting on line 1
+  test41.cc:30: Expected `MEMORY BUG???: invalid free of pointer ???, not allocated`
+  output:1:          Got `alloc count: active          0   total          1   fail          0
+                          alloc size:  active       4200   total       4200   fail          0`
+test42 test42 FAIL: Unexpected output starting on line 2
+  test42.cc:15: Expected `MEMORY BUG: test???.cc:10: invalid free of pointer ??ptr??, not allocated`
+  output:2:          Got `alloc count: active          0   total          1   fail          0
+                          alloc size:  active       2001   total       2001   fail          0`
+test43 test43 FAIL: Unexpected output starting on line 2
+  test43.cc:15: Expected `MEMORY BUG: test???.cc:10: invalid free of pointer ??ptr??, not allocated`
+  output:2:          Got `alloc count: active          0   total          1   fail          0
+                          alloc size:  active       2001   total       2001   fail          0`
+test44 test44 FAIL: Unexpected output starting on line 2
+  test44.cc:19: Expected `alloc size:  active          0   total        400   fail          0`
+  output:2:          Got `alloc size:  active        400   total        400   fail          0`
+test45 test45 FAIL: Unexpected output starting on line 2
+  test45.cc:18: Expected `MEMORY BUG???: detected wild write during free of pointer ??ptr??`
+  output:2:          Got `alloc count: active          0   total          1   fail          0
+                          alloc size:  active         40   total         40   fail          0`
+test46 test46 FAIL: Unexpected output starting on line 2
+  test46.cc:18: Expected `MEMORY BUG???: detected wild write during free of pointer ??ptr??`
+  output:2:          Got `alloc count: active          0   total          1   fail          0
+                          alloc size:  active         63   total         63   fail          0`
+test47 test47 FAIL: Unexpected output starting on line 1
+  test47.cc:16: Expected `MEMORY BUG???: detected wild write during free of pointer ???`
+  output:1:          Got `alloc count: active          0   total          1   fail          0
+                          alloc size:  active          3   total          3   fail          0`
+test48 test48 OK
+  LINK test49 
+test49 test49 FAIL: Missing output starting on line 1
+  test49.cc:38: Expected `LEAK CHECK: test???.cc:16: allocated object ??ptr?? with size ??size??`
+  output:1:          Got `EXPECTED LEAK: 0x78cc7f13f210 with size 8`
+  COMPILE test50.cc
+  LINK test50 
+test50 test50 FAIL: Missing output starting on line 0
+  test50.cc:30: Expected `LEAK CHECK: test???.cc:10: allocated object ??{\w+}?? with size 11`
+  COMPILE test51.cc
+  LINK test51 
+test51 test51 FAIL: Unexpected output starting on line 2
+  test51.cc:32: Expected `alloc size:  active         40   total         55   fail        ???`
+  output:2:          Got `alloc size:  active         55   total         55   fail          0`
+  COMPILE test52.cc
+  LINK test52 
+test52 test52 FAIL: Unexpected output starting on line 1
+  test52.cc:18: Expected `MEMORY BUG: test???.cc:11: invalid free of pointer ???, not allocated`
+  output:1:          Got `alloc count: active 18446744073709551615   total          3   fail          0
+                          alloc size:  active       9489   total       9489   fail          0`
+  COMPILE test53.cc
+  LINK test53 
+test53 test53 FAIL: Unexpected output starting on line 1
+  test53.cc:18: Expected `MEMORY BUG???: invalid free of pointer ???, not allocated`
+  output:1:          Got `alloc count: active          3   total          4   fail          0
+                          alloc size:  active       3466   total       3466   fail          0`
+21 of 56 tests passed
+make: *** [GNUmakefile:20: check-all] Error 1

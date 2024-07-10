@@ -1,8 +1,8 @@
 # compiler flags
-CFLAGS := -std=gnu2x -Wall -Wextra -Wshadow -g $(DEFS) $(CFLAGS)
-CXXFLAGS := -std=gnu++2a -Wall -Wextra -Wshadow -g $(DEFS) $(CXXFLAGS)
+CFLAGS := -std=gnu2x -g -Wall -Wextra -Wshadow -g $(DEFS) $(CFLAGS)
+CXXFLAGS := -std=gnu++2a -g -Wall -Wextra -Wshadow -g $(DEFS) $(CXXFLAGS)
 
-O ?= -O3
+O ?= -O0
 ifeq ($(filter 0 1 2 3 s z g fast,$(O)),$(strip $(O)))
 override O := -O$(O)
 endif
