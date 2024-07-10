@@ -43,6 +43,14 @@ m61_memory_buffer::~m61_memory_buffer() {
 }
 
 // Freed allocations buffer
+void free_extra_memory(void *ptr, size_t requested_sz, size_t allocated_sz) {
+    const int64_t extra_memory = ((allocated_sz - requested_sz) - 2*sizeof(chunk_header));   
+    // Is there space left to allocate one more chunk+header, after allocating this payload + header
+    if (extra_memory > 0) {
+        void *new_ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + requested_sz + sizeof(chunk_header));
+        free_pool[extra_memory].push(new_ptr);
+    }
+}
 void* allocate_from_free_pool(size_t sz) {
     // Search for a best-fit strategy through various pool sizes
     for (auto &pool_size : free_pool) {
@@ -52,12 +60,14 @@ void* allocate_from_free_pool(size_t sz) {
             if (!free_stack.empty()) {
                 void *ptr = free_stack.top();
                 free_stack.pop();
+                free_extra_memory(ptr, sz, size);
                 return ptr;
             }
         }
     }
     return nullptr;
 }
+
 
 // Statistics
 
