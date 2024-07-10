@@ -135,7 +135,7 @@ chunk_header* extract_chunk_header(void *ptr) {
 void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
     size_t total_size = sz + sizeof(chunk_header);
-    if (check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
+    if (!check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
         void *ptr = nullptr;
         if (nullptr != (ptr = allocate_from_free_pool(sz))) {
             void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
