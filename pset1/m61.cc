@@ -103,12 +103,12 @@ size_t offset_to_next_aligned_size(size_t size) {
 bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t size) {
     // check for wraparound
     if (pos + size < pos) {
-        return true;
+        return false;
     }
     else if (pos + size > buffer_sz) {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 void* fill_chunk_header(void *ptr, size_t sz, [[maybe_unused]]const char* file, [[maybe_unused]]int line) {
