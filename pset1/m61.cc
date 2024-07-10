@@ -115,7 +115,8 @@ void* fill_chunk_header(void *ptr, size_t sz, [[maybe_unused]]const char* file, 
     chunk_header* hdr = reinterpret_cast<chunk_header*>(ptr); 
     hdr->size = sz;
 
-    void *payload_ptr = (char *)ptr + sizeof(chunk_header);
+    void *payload_ptr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr) + 
+            offset_to_next_aligned_size(sizeof(chunk_header)));
     return payload_ptr;
 }
 
@@ -134,7 +135,9 @@ chunk_header* extract_chunk_header(void *ptr) {
 
 void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
-    size_t total_size = sz + sizeof(chunk_header);
+    const size_t aligned_header_size = offset_to_next_aligned_size(sizeof(chunk_header));
+    const size_t aligned_chunk_size = offset_to_next_aligned_size(sz);
+    const size_t total_size = aligned_chunk_size + aligned_header_size;
     if (!check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
         void *ptr = nullptr;
         if (nullptr != (ptr = allocate_from_free_pool(sz))) {
@@ -148,7 +151,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
 
     // Otherwise there is enough space; claim the next `sz` bytes
     void* ptr = &default_buffer.buffer[default_buffer.pos];
-    default_buffer.pos += offset_to_next_aligned_size(total_size);
+    default_buffer.pos += total_size;
 
     void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
     default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz);
