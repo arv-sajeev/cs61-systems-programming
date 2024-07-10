@@ -71,16 +71,16 @@ void* allocate_from_free_pool(size_t sz) {
 
 // Statistics
 
-void m61_statistics::update_successful_allocation(uintptr_t ptr, size_t sz) {
+void m61_statistics::update_successful_allocation(uintptr_t ptr, size_t requested_sz, size_t allocated_sz) {
     default_stats.ntotal++;
     default_stats.nactive++;
-    default_stats.total_size += sz;
-    default_stats.active_size += sz;
+    default_stats.total_size += requested_sz;
+    default_stats.active_size += requested_sz;
     if (ptr < default_stats.heap_min) {
         default_stats.heap_min = ptr;
     }
-    if ((ptr+sz+sizeof(chunk_header)) > default_stats.heap_max ) {
-        default_stats.heap_max = (ptr+sz+sizeof(chunk_header));
+    if ((ptr+allocated_sz) > default_stats.heap_max ) {
+        default_stats.heap_max = (ptr+allocated_sz);
     }
 }
 
@@ -142,7 +142,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
         void *ptr = nullptr;
         if (nullptr != (ptr = allocate_from_free_pool(sz))) {
             void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
-            default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz);
+            default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz, total_size);
             return payload_ptr;
         }
         default_stats.update_failed_allocation(sz);

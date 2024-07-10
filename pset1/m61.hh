@@ -35,7 +35,7 @@ struct m61_statistics {
     uintptr_t heap_min = INTPTR_MAX;                 // smallest allocated addr
     uintptr_t heap_max = 0;                 // largest allocated addr
     public:
-        void update_successful_allocation(uintptr_t ptr, size_t sz);
+        void update_successful_allocation(uintptr_t ptr, size_t requested_sz, size_t allocated_sz);
         void update_failed_allocation(size_t sz);
         void update_free(uintptr_t ptr, size_t sz);
 };
