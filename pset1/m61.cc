@@ -154,7 +154,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     default_buffer.pos += total_size;
 
     void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
-    default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz);
+    default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz, total_size);
     return payload_ptr;
 }
 
