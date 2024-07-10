@@ -7,6 +7,7 @@
 #include <cassert>
 #include <sys/mman.h>
 #include <unordered_map>
+#include <map>
 #include <queue>
 
 
@@ -25,7 +26,7 @@ struct chunk_header {
 
 static m61_memory_buffer default_buffer;
 static m61_statistics default_stats;
-static std::unordered_map<size_t, std::queue<void*>> freed_allocations;
+static std::map<size_t, std::queue<void*>> free_pool;
 
 // Memory buffer
 m61_memory_buffer::m61_memory_buffer() {
@@ -40,6 +41,23 @@ m61_memory_buffer::m61_memory_buffer() {
 
 m61_memory_buffer::~m61_memory_buffer() {
     munmap(this->buffer, this->size);
+}
+
+// Freed allocations buffer
+void* allocate_from_free_pool(size_t sz) {
+    // Search for a best-fit strategy through various pool sizes
+    for (auto &pool_size : free_pool) {
+        const auto& size =  pool_size.first;
+        auto& free_queue =  pool_size.second;
+        if (size >= sz) {
+            if (!free_queue.empty()) {
+                void *ptr = free_queue.front();
+                free_queue.pop();
+                return ptr;
+            }
+        }
+    }
+    return nullptr;
 }
 
 // Statistics
@@ -73,7 +91,7 @@ size_t offset_to_next_aligned_size(size_t size) {
     return offset + size;
 }
 
-bool check_out_of_bounds(size_t pos, size_t buffer_sz, size_t size) {
+bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t size) {
     // check for wraparound
     if (pos + size < pos) {
         return true;
@@ -107,17 +125,14 @@ chunk_header* extract_chunk_header(void *ptr) {
 
 void* m61_malloc(size_t sz, const char* file, int line) {
     (void) file, (void) line;   // avoid uninitialized variable warnings
-    // Your code here.
     size_t total_size = sz + sizeof(chunk_header);
-    if (check_out_of_bounds(default_buffer.pos, default_buffer.size, total_size)) {
-        if (!freed_allocations[sz].empty()) {
-            void *ptr = freed_allocations[sz].front();
-            freed_allocations[sz].pop();
+    if (check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
+        void *ptr = nullptr;
+        if (nullptr != (ptr = allocate_from_free_pool(sz))) {
             void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
             default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz);
             return payload_ptr;
-        } 
-        // Not enough space left in default buffer for allocation
+        }
         default_stats.update_failed_allocation(sz);
         return nullptr;
     }
@@ -146,7 +161,7 @@ void m61_free(void* ptr, const char* file, int line) {
     }
 
     chunk_header* hdr = extract_chunk_header(ptr);
-    freed_allocations[hdr->size].push(ptr);
+    free_pool[hdr->size].push(ptr);
 
     default_stats.update_free(reinterpret_cast<uintptr_t>(ptr), hdr->size);
     // Your code here. The handout code does nothing!
@@ -168,7 +183,7 @@ void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
         return nullptr;
     }
     // Your code here (not needed for first tests).
-    if (check_out_of_bounds(default_buffer.pos, default_buffer.size, total_size)) {
+    if (check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
         // Not enough space left in default buffer for allocation
         default_stats.update_failed_allocation(sz);
         return nullptr;
