@@ -51,6 +51,7 @@ void free_extra_memory(void *ptr, size_t requested_sz, size_t allocated_sz) {
         free_pool[extra_memory].push(new_ptr);
     }
 }
+
 void* allocate_from_free_pool(size_t sz) {
     // Search for a best-fit strategy through various pool sizes
     for (auto &pool_size : free_pool) {
@@ -68,9 +69,22 @@ void* allocate_from_free_pool(size_t sz) {
     return nullptr;
 }
 
+// Chunk Header
+
+void* fill_chunk_header(void *ptr, size_t sz, [[maybe_unused]]const char* file, [[maybe_unused]]int line) {
+    chunk_header* hdr = reinterpret_cast<chunk_header*>(ptr); 
+    hdr->size = sz;
+
+    void *payload_ptr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr) + 
+            offset_to_next_aligned_size(sizeof(chunk_header)));
+    return payload_ptr;
+}
+
+chunk_header* extract_chunk_header(void *ptr) {
+    return reinterpret_cast<chunk_header*>(static_cast<char*>(ptr)-offset_to_next_aligned_size(sizeof(chunk_header)));                                                                                                                                                                                                                       
+}
 
 // Statistics
-
 void m61_statistics::update_successful_allocation(uintptr_t ptr, size_t requested_sz, size_t allocated_sz) {
     default_stats.ntotal++;
     default_stats.nactive++;
@@ -118,18 +132,6 @@ bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t s
     return true;
 }
 
-void* fill_chunk_header(void *ptr, size_t sz, [[maybe_unused]]const char* file, [[maybe_unused]]int line) {
-    chunk_header* hdr = reinterpret_cast<chunk_header*>(ptr); 
-    hdr->size = sz;
-
-    void *payload_ptr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr) + 
-            offset_to_next_aligned_size(sizeof(chunk_header)));
-    return payload_ptr;
-}
-
-chunk_header* extract_chunk_header(void *ptr) {
-    return reinterpret_cast<chunk_header*>(static_cast<char*>(ptr)-sizeof(chunk_header));                                                                                                                                                                                                                       
-}
 
 
 
