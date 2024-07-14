@@ -194,12 +194,6 @@ void* m61_calloc(size_t count, size_t sz, const char* file, int line) {
         default_stats.update_failed_allocation(sz);
         return nullptr;
     }
-    // Your code here (not needed for first tests).
-    if (check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
-        // Not enough space left in default buffer for allocation
-        default_stats.update_failed_allocation(sz);
-        return nullptr;
-    }
     void* ptr = m61_malloc(total_size, file, line);
     if (ptr) {
         memset(ptr, 0, total_size);
