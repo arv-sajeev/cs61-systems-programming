@@ -42,6 +42,29 @@ m61_memory_buffer::~m61_memory_buffer() {
     munmap(this->buffer, this->size);
 }
 
+// Utilities
+size_t offset_to_next_aligned_size(size_t size) {
+    auto offset = (size % alignof(std::max_align_t));
+    return offset + size;
+}
+
+bool is_add_wraparound(size_t sum, size_t part) {
+    if (sum < part) 
+        return true;
+    else 
+        return false;
+}
+
+bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t size) {
+    const size_t total_size = pos+size;
+    if (is_add_wraparound((total_size), pos) || is_add_wraparound((total_size), size)) {
+        return false;
+    }
+    else if (total_size > buffer_sz) {
+        return false;
+    }
+    return true;
+}
 // Freed allocations buffer
 void free_extra_memory(void *ptr, size_t requested_sz, size_t allocated_sz) {
     const int64_t extra_memory = ((allocated_sz - requested_sz) - 2*sizeof(chunk_header));   
@@ -107,34 +130,6 @@ void m61_statistics::update_free([[maybe_unused]]uintptr_t ptr, size_t sz) {
     default_stats.nactive--;
     default_stats.active_size -= sz;
 }
-
-// Utilities
-size_t offset_to_next_aligned_size(size_t size) {
-    auto offset = (size % alignof(std::max_align_t));
-    return offset + size;
-}
-
-bool is_add_wraparound(size_t sum, size_t part) {
-    if (sum < part) 
-        return true;
-    else 
-        return false;
-}
-
-bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t size) {
-    const size_t total_size = pos+size;
-    if (is_add_wraparound((total_size), pos) || is_add_wraparound((total_size), size)) {
-        return false;
-    }
-    else if (total_size > buffer_sz) {
-        return false;
-    }
-    return true;
-}
-
-
-
-
 
 /// m61_malloc(sz, file, line)
 ///    Returns a pointer to `sz` bytes of freshly-allocated dynamic memory.
