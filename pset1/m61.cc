@@ -100,12 +100,19 @@ size_t offset_to_next_aligned_size(size_t size) {
     return offset + size;
 }
 
+bool is_add_wraparound(size_t sum, size_t part) {
+    if (sum < part) 
+        return true;
+    else 
+        return false;
+}
+
 bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t size) {
-    // check for wraparound
-    if (pos + size < pos) {
+    const size_t total_size = pos+size;
+    if (is_add_wraparound((total_size), pos) || is_add_wraparound((total_size), size)) {
         return false;
     }
-    else if (pos + size > buffer_sz) {
+    else if (total_size > buffer_sz) {
         return false;
     }
     return true;
@@ -138,6 +145,11 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     const size_t aligned_header_size = offset_to_next_aligned_size(sizeof(chunk_header));
     const size_t aligned_chunk_size = offset_to_next_aligned_size(sz);
     const size_t total_size = aligned_chunk_size + aligned_header_size;
+    if (is_add_wraparound(total_size, sz)) {
+        default_stats.update_failed_allocation(sz);
+        return nullptr;
+
+    }
     if (!check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
         void *ptr = nullptr;
         if (nullptr != (ptr = allocate_from_free_pool(sz))) {
