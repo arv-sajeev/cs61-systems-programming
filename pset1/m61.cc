@@ -182,7 +182,7 @@ void m61_free(void* ptr, const char* file, int line) {
     }
 
     chunk_header* hdr = extract_chunk_header(ptr);
-    free_pool[hdr->size].push(ptr);
+    free_pool[hdr->size].push(ptr-offset_to_next_aligned_size(sizeof(chunk_header)));
 
     default_stats.update_free(reinterpret_cast<uintptr_t>(ptr), hdr->size);
     // Your code here. The handout code does nothing!
