@@ -9,39 +9,6 @@
 #include <map>
 #include <stack>
 
-
-struct m61_memory_buffer {
-    char* buffer;
-    size_t pos = 0;
-    size_t size = 8 << 20; /* 8 MiB */
-
-    m61_memory_buffer();
-    ~m61_memory_buffer();
-};
-
-struct chunk_header {
-    size_t size;
-};
-
-static m61_memory_buffer default_buffer;
-static m61_statistics default_stats;
-static std::map<size_t, std::stack<void*>> free_pool;
-
-// Memory buffer
-m61_memory_buffer::m61_memory_buffer() {
-    void* buf = mmap(nullptr,    // Place the buffer at a random address
-        this->size,              // Buffer should be 8 MiB big
-        PROT_WRITE,              // We want to read and write the buffer
-        MAP_ANON | MAP_PRIVATE, -1, 0);
-                                 // We want memory freshly allocated by the OS
-    assert(buf != MAP_FAILED);
-    this->buffer = (char*) buf;
-}
-
-m61_memory_buffer::~m61_memory_buffer() {
-    munmap(this->buffer, this->size);
-}
-
 // Utilities
 size_t offset_to_next_aligned_size(size_t size) {
     auto offset = (size % alignof(std::max_align_t));
@@ -65,13 +32,85 @@ bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t s
     }
     return true;
 }
+struct chunk_header {
+    size_t size;
+    bool used;
+    void *next_chunk;
+};
+
+// Memory buffer
+struct m61_memory_buffer {
+    char* buffer;
+    size_t pos = 0;
+    size_t size = 8 << 20; /* 8 MiB */
+
+    void* get_next_chunk();
+    m61_memory_buffer();
+    ~m61_memory_buffer();
+};
+
+
+
+static m61_memory_buffer default_buffer;
+static m61_statistics default_stats;
+static std::map<size_t, std::stack<void*>> free_pool;
+
+// Memory buffer
+m61_memory_buffer::m61_memory_buffer() {
+    void* buf = mmap(nullptr,    // Place the buffer at a random address
+        this->size,              // Buffer should be 8 MiB big
+        PROT_WRITE,              // We want to read and write the buffer
+        MAP_ANON | MAP_PRIVATE, -1, 0);
+                                 // We want memory freshly allocated by the OS
+    assert(buf != MAP_FAILED);
+    this->buffer = (char*) buf;
+}
+
+void *m61_memory_buffer::get_next_chunk() {
+    return &this->buffer[this->pos];
+}
+
+m61_memory_buffer::~m61_memory_buffer() {
+    munmap(this->buffer, this->size);
+}
+
+// Chunk Header
+void fill_chunk_header(void *ptr, size_t sz, bool used, void *next_chunk, 
+        [[maybe_unused]]const char* file, [[maybe_unused]]int line) {
+    chunk_header* hdr = reinterpret_cast<chunk_header*>(ptr); 
+    hdr->size = sz;
+    hdr->used = used;
+    hdr->next_chunk = next_chunk;
+}
+
+void* get_payload_ptr(void *ptr) {
+    void *payload_ptr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr) + 
+            offset_to_next_aligned_size(sizeof(chunk_header)));
+    return payload_ptr;
+}
+
+chunk_header* extract_chunk_header(void *ptr) {
+    return reinterpret_cast<chunk_header*>(static_cast<char*>(ptr)-offset_to_next_aligned_size(sizeof(chunk_header)));                                                                                                                                                                                                                       
+}
+
 // Freed allocations buffer
-void free_extra_memory(void *ptr, size_t requested_sz, size_t allocated_sz) {
-    const int64_t extra_memory = ((allocated_sz - requested_sz) - 2*sizeof(chunk_header));   
+
+void split_current_chunk(void* ptr, size_t requested_size, size_t extra_memory) {
+    chunk_header* current_chunk_header = extract_chunk_header(ptr);
+    void *new_ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + requested_size + sizeof(chunk_header));
+    // Fill tail chunk header
+    fill_chunk_header(new_ptr, extra_memory, false, current_chunk_header->next_chunk, nullptr, 0);
+    // Update head chunk header, reusing same chunk header
+    fill_chunk_header(current_chunk_header, requested_size, true, new_ptr, nullptr, 0);
+    free_pool[extra_memory].push(new_ptr);
+}
+
+void free_extra_memory(void *ptr, size_t requested_size, size_t available_size) {
+    const int64_t extra_memory = ((available_size - requested_size) - 2*sizeof(chunk_header));   
+    chunk_header* current_chunk_header = extract_chunk_header(ptr);
     // Is there space left to allocate one more chunk+header, after allocating this payload + header
     if (extra_memory > 0) {
-        void *new_ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + requested_sz + sizeof(chunk_header));
-        free_pool[extra_memory].push(new_ptr);
+        split_current_chunk(ptr, requested_size, extra_memory);
     }
 }
 
@@ -92,20 +131,20 @@ void* allocate_from_free_pool(size_t sz) {
     return nullptr;
 }
 
-// Chunk Header
-
-void* fill_chunk_header(void *ptr, size_t sz, [[maybe_unused]]const char* file, [[maybe_unused]]int line) {
-    chunk_header* hdr = reinterpret_cast<chunk_header*>(ptr); 
-    hdr->size = sz;
-
-    void *payload_ptr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr) + 
-            offset_to_next_aligned_size(sizeof(chunk_header)));
-    return payload_ptr;
+void merge_contiguous_free_chunks(chunk_header* hdr) {
+    chunk_header* current_hdr = hdr;
+    hdr->used = false;
+    while (current_hdr->next_chunk) {
+        if (hdr->used) {
+            break;
+        }
+        hdr->size += current_hdr->size + offset_to_next_aligned_size(sizeof(chunk_header));
+        hdr->next_chunk = current_hdr->next_chunk;
+        current_hdr = extract_chunk_header(current_hdr->next_chunk);
+    }
 }
 
-chunk_header* extract_chunk_header(void *ptr) {
-    return reinterpret_cast<chunk_header*>(static_cast<char*>(ptr)-offset_to_next_aligned_size(sizeof(chunk_header)));                                                                                                                                                                                                                       
-}
+
 
 // Statistics
 void m61_statistics::update_successful_allocation(uintptr_t ptr, size_t requested_sz, size_t allocated_sz) {
@@ -150,7 +189,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     if (!check_if_available_in_default_buffer(default_buffer.pos, default_buffer.size, total_size)) {
         void *ptr = nullptr;
         if (nullptr != (ptr = allocate_from_free_pool(sz))) {
-            void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
+            void *payload_ptr = get_payload_ptr(ptr);
             default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz, total_size);
             return payload_ptr;
         }
@@ -159,10 +198,14 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     }
 
     // Otherwise there is enough space; claim the next `sz` bytes
-    void* ptr = &default_buffer.buffer[default_buffer.pos];
+    void* ptr = default_buffer.get_next_chunk();
     default_buffer.pos += total_size;
 
-    void *payload_ptr = fill_chunk_header(ptr, sz, file, line);
+    // Fill header for chunk being allocated
+    fill_chunk_header(ptr, sz, true, default_buffer.get_next_chunk(), file, line);
+    // Fill header for next chunk
+    fill_chunk_header(default_buffer.get_next_chunk(), default_buffer.size - default_buffer.pos, false, nullptr, file, line);
+    void *payload_ptr = get_payload_ptr(ptr);
     default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz, total_size);
     return payload_ptr;
 }
@@ -182,10 +225,9 @@ void m61_free(void* ptr, const char* file, int line) {
     }
 
     chunk_header* hdr = extract_chunk_header(ptr);
-    free_pool[hdr->size].push(reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(ptr)-offset_to_next_aligned_size(sizeof(chunk_header))));
-
     default_stats.update_free(reinterpret_cast<uintptr_t>(ptr), hdr->size);
-    // Your code here. The handout code does nothing!
+    merge_contiguous_free_chunks(hdr);
+    free_pool[hdr->size].push(reinterpret_cast<void*>(hdr));
 }
 
 
