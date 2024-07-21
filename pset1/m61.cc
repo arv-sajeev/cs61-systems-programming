@@ -235,7 +235,7 @@ void m61_free(void* ptr, const char* file, int line) {
     }
  
     if (ptr < default_buffer.buffer+offset_to_next_aligned_size(sizeof(chunk_header)) || ptr > default_buffer.buffer + default_buffer.size) {
-        fprintf(stderr, "MEMORY BUG: invalid free of pointer %p, not in heap", file, line, ptr);
+        fprintf(stderr, "MEMORY BUG: invalid free of pointer %p, not in heap", ptr);
         exit(EXIT_FAILURE);
     }
 
