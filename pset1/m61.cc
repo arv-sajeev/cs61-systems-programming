@@ -33,9 +33,13 @@ bool check_if_available_in_default_buffer(size_t pos, size_t buffer_sz, size_t s
     }
     return true;
 }
+
+// Chunk header
 struct chunk_header {
     size_t size;
     bool used;
+    const char* func;
+    int line;
     void *next_chunk;
 };
 
@@ -83,6 +87,8 @@ void fill_chunk_header(void *ptr, size_t sz, bool used, void *next_chunk,
     chunk_header* hdr = reinterpret_cast<chunk_header*>(ptr); 
     hdr->size = sz;
     hdr->used = used;
+    hdr->func = file;
+    hdr->line = line;
     hdr->next_chunk = next_chunk;
 }
 
@@ -229,17 +235,17 @@ void m61_free(void* ptr, const char* file, int line) {
     }
  
     if (ptr < default_buffer.buffer+offset_to_next_aligned_size(sizeof(chunk_header)) || ptr > default_buffer.buffer + default_buffer.size) {
-        fprintf(stderr, "MEMORY BUG%s:%d: invalid free of pointer %p, not in heap", __FUNCTION__, __LINE__, ptr);
+        fprintf(stderr, "MEMORY BUG: %s:%d invalid free of pointer %p, not in heap", file, line, ptr);
         exit(EXIT_FAILURE);
     }
 
     if (current_allocation.find(ptr) == current_allocation.end()) {
         // Check if it was recently freed, then mark as a double free
         if (freed_allocations.find(ptr) != freed_allocations.end()) {
-            fprintf(stderr, "MEMORY BUG%s:%d: invalid free of pointer %p, double free", __FUNCTION__, __LINE__, ptr);
+            fprintf(stderr, "MEMORY BUG: %s:%d: invalid free of pointer %p, double free", file, line, ptr);
             exit(EXIT_FAILURE);
         }
-        fprintf(stderr, "MEMORY BUG%s:%d: invalid free of pointer %p, not allocated", __FUNCTION__, __LINE__, ptr);
+        fprintf(stderr, "MEMORY BUG: %s:%d: invalid free of pointer %p, not allocated", file, line, ptr);
         exit(EXIT_FAILURE);
     }
 
