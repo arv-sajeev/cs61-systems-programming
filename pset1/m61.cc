@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 #include <map>
 #include <stack>
+#include <set>
 
 // Utilities
 size_t offset_to_next_aligned_size(size_t size) {
@@ -54,6 +55,8 @@ struct m61_memory_buffer {
 static m61_memory_buffer default_buffer;
 static m61_statistics default_stats;
 static std::map<size_t, std::stack<void*>> free_pool;
+static std::set<void*> current_allocation;
+static std::set<void*> freed_allocations;
 
 // Memory buffer
 m61_memory_buffer::m61_memory_buffer() {
@@ -189,6 +192,8 @@ void* m61_malloc(size_t sz, const char* file, int line) {
         if (nullptr != (ptr = allocate_from_free_pool(sz))) {
             void *payload_ptr = get_payload_ptr(ptr);
             default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz, total_size);
+            current_allocation.insert(payload_ptr);
+            freed_allocations.erase(payload_ptr);
             return payload_ptr;
         }
         default_stats.update_failed_allocation(sz);
@@ -204,6 +209,7 @@ void* m61_malloc(size_t sz, const char* file, int line) {
     // Fill header for next chunk
     fill_chunk_header(default_buffer.get_next_chunk(), default_buffer.size - default_buffer.pos, false, nullptr, file, line);
     void *payload_ptr = get_payload_ptr(ptr);
+    current_allocation.insert(payload_ptr);
     default_stats.update_successful_allocation(reinterpret_cast<uintptr_t>(ptr), sz, total_size);
     return payload_ptr;
 }
@@ -221,12 +227,28 @@ void m61_free(void* ptr, const char* file, int line) {
     if (ptr == nullptr) {
         return;
     }
+ 
+    if (ptr < default_buffer.buffer || ptr > default_buffer.buffer + default_buffer.size) {
+        fprintf(stderr, "MEMORY BUG%s:%d: invalid free of pointer %p, not in heap", __FUNCTION__, __LINE__, ptr);
+        exit(EXIT_FAILURE);
+    }
+
+    if (current_allocation.find(ptr) == current_allocation.end()) {
+        // Check if it was recently freed, then mark as a double free
+        if (freed_allocations.find(ptr) != freed_allocations.end()) {
+            fprintf(stderr, "MEMORY BUG%s:%d: invalid free of pointer %p, double free", __FUNCTION__, __LINE__, ptr);
+            exit(EXIT_FAILURE);
+        }
+        fprintf(stderr, "MEMORY BUG%s:%d: invalid free of pointer %p, not allocated", __FUNCTION__, __LINE__, ptr);
+        exit(EXIT_FAILURE);
+    }
 
     chunk_header* hdr = extract_chunk_header(ptr);
     default_stats.update_free(reinterpret_cast<uintptr_t>(ptr), hdr->size);
     merge_contiguous_free_chunks(hdr);
     hdr->used = false;
     free_pool[hdr->size].push(reinterpret_cast<void*>(hdr));
+    freed_allocations.insert(ptr);
 }
 
 
