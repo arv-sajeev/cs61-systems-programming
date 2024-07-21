@@ -132,15 +132,14 @@ void* allocate_from_free_pool(size_t sz) {
 }
 
 void merge_contiguous_free_chunks(chunk_header* hdr) {
-    chunk_header* current_hdr = hdr;
-    hdr->used = false;
-    while (current_hdr->next_chunk) {
+    chunk_header* current_hdr = reinterpret_cast<chunk_header*>(hdr->next_chunk);
+    while (current_hdr) {
         if (hdr->used) {
             break;
         }
         hdr->size += current_hdr->size + offset_to_next_aligned_size(sizeof(chunk_header));
         hdr->next_chunk = current_hdr->next_chunk;
-        current_hdr = extract_chunk_header(current_hdr->next_chunk);
+        current_hdr = reinterpret_cast<chunk_header*>(current_hdr->next_chunk);
     }
 }
 
@@ -227,6 +226,7 @@ void m61_free(void* ptr, const char* file, int line) {
     chunk_header* hdr = extract_chunk_header(ptr);
     default_stats.update_free(reinterpret_cast<uintptr_t>(ptr), hdr->size);
     merge_contiguous_free_chunks(hdr);
+    hdr->used = false;
     free_pool[hdr->size].push(reinterpret_cast<void*>(hdr));
 }
 
