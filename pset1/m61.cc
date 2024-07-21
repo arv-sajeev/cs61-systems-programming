@@ -107,7 +107,6 @@ void split_current_chunk(void* ptr, size_t requested_size, size_t extra_memory) 
 
 void free_extra_memory(void *ptr, size_t requested_size, size_t available_size) {
     const int64_t extra_memory = ((available_size - requested_size) - 2*sizeof(chunk_header));   
-    chunk_header* current_chunk_header = extract_chunk_header(ptr);
     // Is there space left to allocate one more chunk+header, after allocating this payload + header
     if (extra_memory > 0) {
         split_current_chunk(ptr, requested_size, extra_memory);
